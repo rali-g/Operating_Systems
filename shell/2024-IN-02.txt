@@ -1,0 +1,28 @@
+#!/bin/bash
+
+if [ "${#}" -ne 2 ]; then
+    echo "Two needed args"
+    exit 1
+fi
+result=$(mktemp)
+while read line; do
+    second=""
+    if [[ $(cat "${line}") =~ ^class[[:space:]][a-zA-Z0-9_]+$ ]]; then
+        first=$(cat "${line}")
+    else
+        first=$(cat "${line}" | awk -F ":" '{print $1}')
+        second=$(cat "${line}" | awk -F":" '{print $2}')
+    fi
+    class=$(echo "${first}" | awk '{print $2}')
+    echo "${class}" >> "${result}"
+    if [[ -z $(echo "${second}") ]]; then
+        continue
+    fi
+    all_inherit=$(echo "${second}" | sed -E 's/^[[:space:]]*([a-z]+.*)/\1/' | tr ',' '\n')
+    while read value; do
+        curr_class=$(echo "${value}" | awk '{print $2}')
+        echo "${class} -> ${curr_class}" >> "${result}"
+    done< <(echo "${all_inherit}")
+done < <(find "${1}" -name "*.h" -size +0)
+cat "${result}"
+rm "${result}"

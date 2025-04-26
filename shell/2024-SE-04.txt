@@ -1,0 +1,40 @@
+#!/bin/bash
+
+build_file() {
+  local file="${1}"
+  if [[ -e "${file}" ]]; then
+    return
+  fi
+
+  local rule
+  rule=$(grep "^${file}:" bakefile)
+
+  if [[ -z "${rule}" ]]; then
+    exit 1
+  fi
+
+  local deps
+  local cmd
+  deps=$(echo "${rule}" | cut -d ':' -f 2)
+  cmd=$(echo "${rule}" | cut -d ':' -f 3)
+
+  for dep in ${deps}; do
+    build_file "${dep}"
+  done
+
+  local rebuild=false
+  if [[ ! -e "${file}" ]]; then
+    rebuild=true
+  else
+    for dep in ${deps}; do
+      if [[ "${dep}" -nt "${file}" ]]; then
+        rebuild=true
+        break
+      fi
+    done
+  fi
+
+  if [[ "${rebuild}" == true ]]; then
+    eval "${cmd}"
+  fi
+}

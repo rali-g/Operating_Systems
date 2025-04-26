@@ -1,0 +1,38 @@
+#! /bin/bash
+
+if [[ "$(whoami)" != "root" ]]; then
+    echo "Only root can execute the script" >$2
+    exit 1
+fi
+
+processes=$(mktemp)
+ps -e -o user=,rss=,pid= | awk '$1 != "root" {print $0}' > "${processes}"
+
+users=$(mktemp)
+ps -e -o user= | sort | uniq > "${users}"
+
+home_dirs=$(mktemp)
+cat /etc/passwd | awk -F ":" '{print $6}' > "${home_dirs}"
+
+root_rss=$(ps -e -o rss= -u root | awk '{sum += $1} END{print sum}')
+
+while read user; do
+    boolean=0
+    home=$(cat "${home_dirs}" | grep -E "${user}")
+    if [[ -z "${home}" || ! -d "${home}" ]]; then
+        boolean=1
+        echo "User ${user} had processes with non-existent dir"
+    elif [[ $(stat -c %U "${home}" 2>/dev/null) != "${user}" ]]; then
+        boolean=1
+        echo "User ${user} is not owner of their home dir"
+    elif [[ ! -w "${home}" ]]; then
+        boolean=1
+        echo "User ${user} does not have write perm"
+    fi
+    if [[ boolean -eq 1 ]]; then
+        user_rss=$(ps -e -o rss= -u "${user}" | awk '{sum += $1} END{print sum}')
+        if [[ "${user_rss}" -gt "${root_rss}" ]]; then
+            killall -u "${user}" 2>/dev/null
+        fi
+    fi
+done< "${users}"

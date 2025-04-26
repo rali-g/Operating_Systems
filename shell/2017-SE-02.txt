@@ -1,0 +1,27 @@
+#!/bin/bash
+
+if [[ "${#}" -ne 3 ]] ; then
+    echo "Invalid args count" >&2
+    exit 1
+fi
+
+if [[ ! -d "${1}" || ! -d "${2}" ]] ; then
+    echo "Args 1 and 2 should be directories" >&2
+    exit 2
+fi
+
+if [[ "$(whoami)" == "root" ]] ; then
+    src="$(realpath "${1}")"
+    dst="$(realpath "${2}")"
+
+    while read file ; do
+        withDst="$(echo "${file}" | sed -E "s|${src}(.*)|${dst}\1|")"
+
+        dirName="$(dirname "${withDst}")"
+
+        mkdir -p "${dirName}"
+        fileName="$(basename "${file}")"
+
+        mv "${file}" "${dirName}/${fileName}"
+    done < <(find "${src}" -type f -name "*${3}*")
+fi

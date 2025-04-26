@@ -1,0 +1,34 @@
+#!/bin/bash
+
+if [[ "${#}" -ne 1 ]]; then
+  echo "One arg needed" >&2
+  exit 1
+fi
+
+if [[ ! -f "${1}" ]]; then
+  echo "Arg is not a file" >&2
+  exit 2
+fi
+
+while read line; do
+  path=$(echo "${line}" | awk '{print $1}')
+  mode=$(echo "${line}" | awk '{print $2}')
+  perm=$(echo "${line}" | awk '{print $3}')
+  if [[ ! -d "${path}" ]]; then
+    continue
+  fi
+  if [[ "${perm}" -gt 777 ]]; then
+    continue
+  fi
+  if [[ "${mode}" == "R" ]]; then
+    command="-perm ${perm}"
+  elif [[ "${mode}" == "A" ]]; then
+    command="-perm /${perm}"
+  elif [[ "${mode}" == "T" ]]; then
+    command="-perm -${perm}"
+  else
+    continue
+  fi
+  find "${path}" -type d -mindepth 1 2>/dev/null ${command} -exec chmod 755 {} \;
+  find "${path}" -type f -mindepth 1 2>/dev/null ${command} -exec chmod 664 {} \;
+done< <(cat "${1}")

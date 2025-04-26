@@ -1,0 +1,17 @@
+#!/bin/bash
+
+sum=$(mktemp)
+
+while read -r line; do
+    echo "${line}" | grep -E -q "^-?[0-9]+(\.[0-9]+)?$"
+    if [[ "${?}" -eq 0 ]]; then
+        abs=$(echo "${line#-}" | sed -E "s/\.//g")
+        calc=$(echo "${abs}" | sed -E "s/([0-9])/\1+/g" | sed "s/+$//")
+        curr_sum=$(echo "$calc" | bc)
+        echo "${line} ${curr_sum}" >> "${sum}"
+    fi
+done
+
+max_sum=$(cat "${sum}" | sort -k 2 -r -n | awk '{print $2}' | head -n 1)
+
+cat "${sum}" | awk -v max="${max_sum}" '$2 = max {print $0}' | sort -k 1 -n | head -n 1 | awk 'print $1'

@@ -1,0 +1,28 @@
+#! /bin/bash
+
+if [[ "${#}" -ne 1 ]]; then
+    echo "One needed arg" >&2
+    exit 1
+fi
+
+if [[ ! -d "${1}" ]]; then
+    echo "Arg should be dir" >&2
+    exit 2
+fi
+
+friends=$(find "${1}" -maxdepth 3 -mindepth 3 -exec basename {} \;)
+
+depth_3=$(find "${1}" -maxdepth 3 -mindepth 3)
+
+chats=$(mktemp)
+
+while read path; do
+    line_count=$(find "${path}" -mindepth 1 -exec cat {} \; | wc -l)
+    curr_friend=$(basename "${path}")
+    echo "${curr_friend} ${line_count}" >> "${chats}"
+done< <(echo "${depth_3}")
+
+result=$(cat "${chats}" | sort -k 1 | awk '{sum[$1] += $2} END{for(el in sum) print el, sum[el]}')
+echo "${result}" | sort -k 2 -r -n | head -n 10
+
+rm "${chats}"

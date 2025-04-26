@@ -1,0 +1,39 @@
+#! /bin/bash
+
+if [[ "${#}" -ne 1 ]]; then
+    echo "One needed arg"
+    exit 1
+fi
+
+if [[ "${1}" != "s0600295" ]]; then
+    echo "Invalid user"
+    exit 2
+fi
+
+users=$(mktemp)
+ps -e -o user= | sort | uniq -c | \
+sed -E "s/^[[:space:]]*([0-9]+.*)/\1/" > "${users}"
+
+foo_pnum=$(cat "${users}" | grep -e "${1}" | cut -d ' ' -f1)
+
+awk -v unum="${foo_pnum}" '{ if ($1 > unum) print $2}' "${users}"
+
+avg_time=$(ps -e -o time= | awk -F: '{sum += 60*60*$1 + 60*$2 + $3} END{print sum / NR}')
+
+foo_time=$(mktemp)
+
+ps -u "${1}" -o time=,pid= > "${foo_time}"
+
+while read line; do
+    curr_time=$(awk -F: '{sum += 60*60*$1 + 60*$2 + $3} END{print sum}')
+    echo "${curr_time}"
+    if [[ $(echo "${curr_time}" > "${avg_time}" | bc -l) ]] ; then
+         pid=$(cat "${foo_time}" | awk '{print $2}')
+         kill "${pid}"
+         sleep 2
+         kill -KILL "${pid}"
+    fi
+done < <(cat "${foo_time}" | awk '{print $1}')
+
+rm "${users}"
+rm "${foo_time}"

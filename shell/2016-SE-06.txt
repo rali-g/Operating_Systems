@@ -1,0 +1,13 @@
+#! /bin/bash
+
+if [[ "${#}" -ne 1 ]]; then
+    echo "One needed arg"
+    exit 1
+fi
+
+if [[ ! -e "${1}" ]]; then
+    echo "Not a file"
+    exit 2
+fi
+
+cat "${1}" | cut -d ' ' -f 4- | awk '{print NR, $0}' | sort -t '"' -k 2

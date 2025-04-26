@@ -1,0 +1,71 @@
+#!/bin/bash
+
+if [[ "${#}" -ne 1 ]]; then
+    echo "One needed arg" >&2
+    exit 1
+fi
+
+if [[ ! "${1}" =~ [0-9]+ ]]; then
+    echo "Fisrt arg is decimal number"
+    exit 2
+fi
+
+num=$(echo "${1} % 12" | bc)
+
+tones=$(mktemp)
+printf "A\nBb\nB\nC\nDb\nD\nEb\nE\nF\nGb\nG\nAb\nA\nBb\nB\nC\nDb\nD\nEb\nE\nF\nGb\nG\nAb" > "${tones}"
+
+matched=$(mktemp)
+output=$(mktemp)
+
+while read -r line; do
+    > "${matched}"
+    echo "${line}" | grep -oP "\[[^\]]*\]" | sort -t "[" -k 1 | uniq >> "${matched}"
+    while read match; do
+        two=$(echo "${match}" | cut -c 2- | cut -c 1,2)
+        one=$(echo "${match}" | cut -c 2- | cut -c 1)
+        cat "${tones}" | grep "${two}" > /dev/null
+        if [[ "${?}" -eq 0 ]]; then
+            count=-1
+            found=0
+            result=""
+            while read tone; do
+                if [[ ${tone} == "${two}" ]]; then
+                    found=1
+                fi
+                if [[ ${found} -eq 1 ]]; then
+                    count=$((count + 1))
+                fi
+                if [[ "${count}" -eq "${1}" && "${found}" -eq 1 ]]; then
+                    result=${tone}
+                    break
+                fi
+            done< <(cat "${tones}")
+            echo "${line}" | sed "s/${two}/${result}/g" > "${output}"
+            continue
+        fi
+        cat "${tones}" | grep "${one}" > /dev/null
+        if [[ "${?}" -eq 0 ]]; then
+            count=-1
+            found=0
+            result=""
+            while read tone; do
+                if [[ ${tone} == "${one}" ]]; then
+                    found=1
+                fi
+                if [[ ${found} -eq 1 ]]; then
+                    count=$((count + 1))
+                fi
+                if [[ "${count}" -eq "${1}" && "${found}" -eq 1 ]]; then
+                    result=${tone}
+                    echo "${result} ${tone}"
+                    break
+                fi
+            done < <(cat "${tones}")
+            echo "${line}" | sed "s/${one}/${result}/g" > "${output}"
+        fi
+    done< <(cat "${matched}")
+    cat "${output}"
+done
+
+rm "${output}"

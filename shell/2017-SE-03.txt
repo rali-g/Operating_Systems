@@ -1,0 +1,30 @@
+#! /bin/bash
+
+processes_per_user=$(mktemp)
+ps -e -o user= | sort -k 1 | uniq -c | sed -E "s/^[[:space:]]*([0-9]+.*)/\1/" > "${processes_per_user}"
+
+sum_per_user=$(mktemp)
+ps -e -o user=,rss= | sort -k 1 | awk '{sums[$1] += $2} END{for(el in sums) print el, sums[el]}' > "${sum_per_user}"
+
+while read line; do
+    user=$(echo "${line}" | awk '{print $2}')
+    all_rss=$(cat "${sum_per_user}" | awk -v user="${user}" '$1 == user {print $2}')
+    num_processes=$(echo "${line}" | awk '{print $1}')
+    if [[ "${num_processes}" -eq 0 ]]; then
+        continue
+    fi
+    avg_rss=$((all_rss / num_processes))
+
+    temp=$(ps -o pid=,rss= -u "${user}" | sort -k 2 -r | head -n 1)
+    max_pid=$(echo "${temp}" | awk '{print $1}')
+    max_rss=$(echo "${temp}" | awk '{print $2}')
+
+    if [[ $((max_rss * 2)) -gt "${avg_rss}" ]]; then
+        kill "${max_pid}"
+        sleep 2
+        kill -KILL "${max_pid}"
+    fi
+done < <(cat "${processes_per_user}")
+
+rm "${processes_per_user}"
+rm "${sum_per_user}"

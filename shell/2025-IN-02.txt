@@ -1,0 +1,33 @@
+#!/bin/bash
+
+if [[ "${#}" -ne 2 ]]; then
+  echo "Two args needed" >&2
+  exit 1
+fi
+
+if [[ -z "${1}" ]]; then
+  echo "Arg1 should be non-empty str"
+  exit 2
+fi
+
+if [[ ! -f "${2}" ]]; then
+  echo "Arg 2 is not valid file"
+  exit 3
+fi
+
+teams=$(mktemp)
+awk '{print $3}' "${2}" | sort | uniq > "${teams}"
+
+while read team; do
+  rows_per_team=$(cat "${2}" | grep -E "${team}")
+  zones=$(echo "${rows_per_team}" | awk '{print $2}')
+  servers=$(echo "${rows_per_team}" | awk '{print $1}')
+  echo "; team "${team}""
+  while read zone; do
+    while read server; do
+      echo "${zone} IN NS "${server}"."${1}""
+    done< <(echo "${servers}")
+  done< <(echo "${zones}")
+done< "${teams}"
+
+rm "${teams}"

@@ -1,0 +1,32 @@
+#! /bin/bash
+
+if [[ "${#}" -ne 2 ]]; then
+    echo "Two needed args" >&2
+    exit 1
+fi
+
+if [[ ! -d "${2}" || ! -z $(ls "${2}") ]]; then
+    echo "Second arg should be empty dir"
+    exit 2
+fi
+
+if [[ ! -f "${1}" ]]; then
+    echo "First arg should be file"
+    exit 3
+fi
+
+name_and_id=$(mktemp)
+cat "${1}" | awk -F "[:(]" '{print $1}' | sed -E "s/[[:space:]]+/:/g" |\
+awk -F ':' '{print $1, $2}' | sort | uniq | awk '{print $1, $2 ";" NR}' > "${name_and_id}"
+cat "${name_and_id}" > "${2}"/dict.txt
+
+while read line; do
+    id=$(echo "${line}" | awk -F";" '{print $2}')
+    name=$(echo "${line}" | awk -F";" '{print $1}')
+    first_name=$(echo "${name}" | awk '{print $1}')
+    second_name=$(echo "${name}" | awk '{print $2}')
+    cat "${1}" | grep -E "[[:space:]]*${first_name}[[:space:]]*${second_name}" | \
+    awk -F ":" '{print $2}' | sed -E 's/^[[:space:]]*//' > "${2}"/"${id}".txt
+done< "${name_and_id}"
+
+rm "${name_and_id}"

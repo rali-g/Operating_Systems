@@ -1,0 +1,30 @@
+#! /bin/bash
+
+if [[ "${#}" -ne 3 ]]; then
+    echo "Three needed arguments"
+    exit 1
+fi
+
+if [[ ! -e "${1}" ]]; then
+    echo "Arg 1 should be a file"
+    exit 2
+fi
+
+if [[ -z "${1}" || -z "${2}" ]]; then
+    echo "Empty strings"
+    exit 3
+fi
+
+arg1=$(awk -F"=" -v str="${2}" '$1 == str {print $2; exit}' "${1}" | tr ' ' '\n')
+arg2=$(awk -F"=" -v str="${3}" '$1 == str {print $2; exit}' "${1}" | tr ' ' '\n')
+
+while read letter; do
+    echo "${arg1}" | grep -q "${letter}"
+    if [[ ${?} -ne 0 ]]; then
+        result+="${letter}"
+    fi
+done < <(echo "${arg2}")
+
+awk -F"=" -v str="${3}" -v result="${result}" \
+'BEGIN {OFS="="} {if ($1 == str) { $2 = result } print $0 }' "${1}"
+

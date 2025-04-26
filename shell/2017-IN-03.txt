@@ -1,0 +1,23 @@
+#!/bin/bash
+
+max_time=0
+max_file=""
+max_user=""
+
+while read line; do
+    user=$(echo "${line}" | awk '{print $1}')
+    dir=$(echo "${line}" | awk '{print $2}')
+    curr_file=$(find "${dir}" -type f -printf "%T@ %p\n" 2>/dev/null | sort -k 1 -r -n | head -n 1)
+    if [[ -z "${curr_file}" ]]; then
+        continue
+    fi
+    time=$(echo "${curr_file}" | awk '{print $1}')
+    path=$(echo "${curr_file}" | awk '{print $2}')
+    if [[ $(echo "${time} > ${max_time}" | bc -l) ]]; then
+        max_time=${time}
+        max_file=${path}
+        max_user=${user}
+    fi
+done < <(cat /etc/passwd | awk -F: '{print $1, $6}')
+
+echo "${max_user} ${max_file}"

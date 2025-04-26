@@ -1,0 +1,36 @@
+#!/bin/bash
+
+if [[ "${#}" -lt 2 ]] ; then
+    echo "Error! Wrong number of arguments."
+    echo "Usage: $0 <time_in_seconds> <command> [args...]"
+    exit 1
+fi
+
+time_limit="${1}"
+shift
+
+start_time=$(date +%s)
+
+count=0
+total_time=0
+
+while true; do
+    command_start=$(date +%s)
+    "$@"
+    command_end=$(date +%s)
+
+    elapsed_time=$((command_end - command_start))
+
+    total_time=$((total_time + elapsed_time))
+
+    count=$((count + 1))
+
+    if [[ "$total_time" -ge "$time_limit" ]]; then
+        break
+    fi
+done
+
+average_time=$((total_time / count))
+
+echo "Ran the command '$*' $count times for $total_time seconds."
+echo "Average runtime: $average_time seconds."
