@@ -38,7 +38,9 @@ void read_file(int fd, int* counter, bool numerate){
     if(res != 0){
         err(2, "Read has failed!");
     }
-    close(fd);
+    if(fd != 0){
+       close(fd);
+    }
 }
 
 int main(int argc, char** argv) {
