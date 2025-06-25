@@ -84,6 +84,8 @@ int main(int argc, char** argv) {
     if(write(out, &h3, sizeof(h3)) != sizeof(h3)){
         err(11, "Could not write!");
     }
+
+    //unnecessary, when i write at a curtain position the empty ones before that will be initialized automatically	
     uint64_t dummy = 0;
     for(size_t i = 0; i < maxValue; i++){
         if(write(out, &dummy, sizeof(dummy)) != sizeof(dummy)){
