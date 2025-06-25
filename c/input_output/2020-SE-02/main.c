@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
         needed++;
 	}
 
-	if(scl_size * 8 != needed){
+	if(scl_size * 8 < needed){
 		err(5, "invalid scl");
 	}
 
