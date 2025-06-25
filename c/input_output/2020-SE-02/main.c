@@ -54,11 +54,11 @@ int main(int argc, char** argv) {
             if((read_res = read(sdl, &sdl_data, sizeof(sdl_data))) != sizeof(sdl_data)){
                 err(6, "Could not read from sdl file!");
             }
+	    if(read_res == 0){
+                errx(7, "There are no left nums in sdl!");
+            }
             uint8_t bit = (scl_byte & mask);
             if(bit != 0){
-                if(read_res == 0){
-                    errx(7, "There are no left nums in sdl!");
-                }
                 if(write(output, &sdl_data, sizeof(sdl_data)) != sizeof(sdl_data)){
                     err(8, "Could not write to output file!");
                 }
