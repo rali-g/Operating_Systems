@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
         err(4, "Could not open file %s", argv[3]);
 	}
 
-	//int scl_size = file_size(scl);
+	int scl_size = file_size(scl);
 	int sdl_size = file_size(sdl);
 	if(sdl_size % sizeof(uint16_t) != 0){
         errx(5, "Wrong input for sdl file!");
@@ -39,6 +39,10 @@ int main(int argc, char** argv) {
 	int needed = count / 8;
 	if(count % 8 != 0){
         needed++;
+	}
+
+	if(scl_size != needed){
+		err(5, "invalid scl");
 	}
 
 	uint8_t scl_byte;
