@@ -7,10 +7,10 @@
 
 int main(void) {
     char buff[1024];
+    const char* cmd = ">";
 
 	int res;
 	while(true){ 
-	    const char* cmd = ">";
 	    if(write(1, cmd, strlen(cmd)) != (ssize_t)strlen(cmd)){
             err(1, "write error");
 	    }
