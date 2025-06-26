@@ -18,7 +18,7 @@ int main(void) {
         if(res == -1){
             err(2, "read error");
         }
-        buff[res - 1] = '\0';
+        buff[res] = '\0';
         
         if(strcmp(buff, "exit") == 0){
             exit(0);
