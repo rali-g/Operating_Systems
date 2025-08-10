@@ -67,11 +67,12 @@ int main(int argc, char** argv) {
                 count++;
             }
         }else{
-            errx(7, "child was killed");
+            count = 0;
         }
 
         logInfo(log, start, end, WEXITSTATUS(status));
 	}
 
 	close(log);
+	exit(0);
 }

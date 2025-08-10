@@ -7,10 +7,10 @@
 
 int main(void) {
     char buff[1024];
+    const char* cmd = ">";
 
 	int res;
 	while(true){ 
-	    const char* cmd = ">";
 	    if(write(1, cmd, strlen(cmd)) != (ssize_t)strlen(cmd)){
             err(1, "write error");
 	    }
@@ -18,7 +18,7 @@ int main(void) {
         if(res == -1){
             err(2, "read error");
         }
-        buff[res - 1] = '\0';
+        buff[res] = '\0';
         
         if(strcmp(buff, "exit") == 0){
             exit(0);

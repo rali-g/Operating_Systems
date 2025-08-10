@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
     int pipeFd[2];
     pipe_wrapper(pipeFd);
     
-    for(int i = 1; i <= argc; i++){
+    for(int i = 1; i < argc; i++){
         pid_t pid = fork_wrapper();
         if(pid == 0){
             close(pipeFd[0]);
@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
     }
 
     close(pipeFd[1]);
-    const char* pattern = "found it";
+    const char* pattern = "found it!";
     
     char ch;
     size_t index = 0;
@@ -100,7 +100,11 @@ int main(int argc, char** argv) {
             for(int i = 0; i < argc - 1; i++){
                 kill_wrapper(pids[i]);
             }
-
+            for(int i = 0; i < argc - 1; i++) {
+                if(wait(NULL) == -1) {
+                    err(26, "wait");
+                }
+            }
             exit(0);
         }
     }

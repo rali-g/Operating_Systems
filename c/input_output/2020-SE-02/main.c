@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
         err(4, "Could not open file %s", argv[3]);
 	}
 
-	//int scl_size = file_size(scl);
+	int scl_size = file_size(scl);
 	int sdl_size = file_size(sdl);
 	if(sdl_size % sizeof(uint16_t) != 0){
         errx(5, "Wrong input for sdl file!");
@@ -41,6 +41,10 @@ int main(int argc, char** argv) {
         needed++;
 	}
 
+	if(scl_size * 8 < needed){
+		err(5, "invalid scl");
+	}
+
 	uint8_t scl_byte;
 	uint16_t sdl_data;
 	ssize_t read_res;
@@ -50,11 +54,11 @@ int main(int argc, char** argv) {
             if((read_res = read(sdl, &sdl_data, sizeof(sdl_data))) != sizeof(sdl_data)){
                 err(6, "Could not read from sdl file!");
             }
+	    if(read_res == 0){
+                errx(7, "There are no left nums in sdl!");
+            }
             uint8_t bit = (scl_byte & mask);
             if(bit != 0){
-                if(read_res == 0){
-                    errx(7, "There are no left nums in sdl!");
-                }
                 if(write(output, &sdl_data, sizeof(sdl_data)) != sizeof(sdl_data)){
                     err(8, "Could not write to output file!");
                 }
