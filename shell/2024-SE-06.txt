@@ -13,16 +13,14 @@ fi
 paths=$(cat "${1}" | awk '{print $1}' | sort | uniq)
 rows=$(mktemp)
 while read line; do
-  last_line=$(grep -E "^${line}[[:space:]]" "${1}" | tail -n 1)
+  last_line=$(grep -E "^${line}" "${1}" | tail -n 1)
   echo "${last_line}" >> "${rows}"
 done< <(echo "${paths}")
 
 while read line; do
-  fields=$(echo "${line}" | awk '{print NF}')
   path=$(echo "${line}" | awk '{print $1}')
   file_type=$(echo "${line}" | awk '{print $2}')
-  user=$(echo "${line}" | awk '{print $3}' | cut -d ':' -f 1)
-  group=$(echo "${line}" | awk '{print $3}' | cut -d ':' -f 2)
+  mode=$(echo "${line}" | awk '{print $3}')
   perm=$(echo "${line}" | awk '{print $4}')
 
   if [[ "${file_type}" == "dir" ]]; then
@@ -45,15 +43,16 @@ while read line; do
       mkdir -p "$(dirname "${path}")"
       touch "${path}"
     elif [[ "${file_type}" == "symlink" ]]; then
-      ln -s "${target}" "${path}"
+      ln -s "${perm}" "${path}"
     fi
     chmod "${perm}" "${path}"
-    chown "${user}:${group}" "${path}"
+    [[ !-z "${mode}" ]] && chown "${mode}" "${path}"
   elif [[ -e "${path}" && ${command} "${path}" ]]; then
     chmod "${perm}" "${path}"
-    chown "${user}:${group}" "${path}"
+    [[ !-z "${mode}" ]] && chown "${mode}" "${path}"
   elif [[ ! -e "${path}" ]]; then
-    mkdir -p "$(dirname "${path}")"
+    dir=$(dirname "${path}")
+    [[ ! -d "${dir}" ]] && mkdir -p "${dir}" -m $(umask)
     touch "${path}"
   fi
 done< <(cat "${rows}")
